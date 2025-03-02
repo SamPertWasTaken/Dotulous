@@ -1,5 +1,5 @@
 [package]
-name = "fast-dots"
+name = "dotulous"
 description = "A fast and easy way to quickly manage dotfiles."
 version = "0.1.0"
 edition = "2021"

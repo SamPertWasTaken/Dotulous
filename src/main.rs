@@ -45,7 +45,7 @@ fn main() {
     // Are we defo in Linux?
     // No Android support for this one, sorry peeps
     if env::consts::OS != "linux" {
-        println!("Fastdots only supports Linux!");
+        println!("Dotulous only supports Linux!");
         exit(-1);
     }
 
@@ -53,13 +53,13 @@ fn main() {
         Ok(r) => r,
         Err(e) => panic!("Unable to find suitable home folder; {}", e)
     };
-    let manifest_path: String = format!("{}/.fastdots/", home_folder);
+    let manifest_path: String = format!("{}/.dotulous/", home_folder);
     let manifest_location: &Path = Path::new(&manifest_path);
     if !manifest_location.exists() {
-        fs::create_dir_all(manifest_location).expect("Unable to create fastdots folder.");
+        fs::create_dir_all(manifest_location).expect("Unable to create dotulous folder.");
         let meta: Meta = Meta::new();
         meta.save_meta(manifest_location);
-        println!("NOTE: Created fastdots folder at {manifest_path}");
+        println!("NOTE: Created dotulous folder at {manifest_path}");
         println!("NOTE: This is where your dotfile configurations will be!");
     }
 
