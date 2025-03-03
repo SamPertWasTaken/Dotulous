@@ -190,8 +190,8 @@ impl DotfileProfile {
                 println!("  WARNING: Destination {destination:?} already exists! Skipping!");
                 continue;
             }
-            if symlink(&source, &destination).is_err() {
-                println!("  ERROR: Failed to symlink path: {source:?} -> {destination:?}")
+            if let Err(e) = symlink(&source, &destination) {
+                println!("  ERROR: Failed to symlink {source:?} -> {destination:?}: {e}")
             }
         }
 
