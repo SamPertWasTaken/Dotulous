@@ -2,7 +2,7 @@ use std::{fs, path::{Path, PathBuf}};
 
 use serde::{Deserialize, Serialize};
 
-use crate::profile::DotfileProfile;
+use crate::{error::DotulousError, profile::DotfileProfile};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Meta {
@@ -21,24 +21,29 @@ impl Meta {
         }
     }
 
-    pub fn save_meta(&self, manifest_location: &Path) {
+    pub fn save_meta(&self, manifest_location: &Path) -> Result<(), DotulousError> {
         let path: PathBuf = manifest_location.join(Path::new("meta.json"));
-        let serialized = serde_json::to_string_pretty(self).expect("Unable to serialize meta file to JSON.");
-        fs::write(path, serialized).expect("Unable to save meta file.");
+        let Ok(serialized) = serde_json::to_string_pretty(self) else {
+            return Err(DotulousError::FailedSerializeMeta)
+        };
+        if fs::write(path, serialized).is_err() {
+            return Err(DotulousError::FailedSaveMeta)
+        } 
+        Ok(())
     }
-    pub fn load_meta(manifest_location: &Path) -> Self {
+    pub fn load_meta(manifest_location: &Path) -> Result<Self, DotulousError> {
         let path: PathBuf = manifest_location.join(Path::new("meta.json"));
         if !path.exists() {
-            panic!("Can't find meta in profile.");
+            return Err(DotulousError::MetaNotFound)
         }
 
         let contents: String = fs::read_to_string(path).expect("Can't read meta file.");
-        serde_json::from_str(&contents).expect("Unable to deserialize meta.")
+        match serde_json::from_str::<Self>(&contents) {
+            Ok(r) => Ok(r),
+            Err(_) => Err(DotulousError::FailedDeserializeMeta),
+        }
     }
 
-    pub fn current_profile_name(&self) -> Option<String> {
-        self.current_profile.clone()
-    }
     pub fn set_current_profile(&mut self, profile: &DotfileProfile) {
         self.current_profile = Some(profile.name.clone());
         self.profile_path = Some(profile.repo_path.clone());
@@ -46,6 +51,9 @@ impl Meta {
     pub fn empty_current_profile(&mut self) {
         self.current_profile = None;
         self.profile_path = None;
+    }
+    pub fn current_profile_name(&self) -> Option<String> {
+        self.current_profile.clone()
     }
 
     pub fn trust_profile(&mut self, path: PathBuf) {
