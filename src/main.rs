@@ -1,10 +1,10 @@
 use std::{env, fs, io, path::{Path, PathBuf}, process::exit};
 
 use clap::{Parser, Subcommand};
-use manifest::DotfileManifest;
+use profile::DotfileProfile;
 use meta::Meta;
 
-mod manifest;
+mod profile;
 mod meta;
 
 #[derive(Parser, Debug)]
@@ -43,7 +43,6 @@ enum Action {
 
 fn main() {
     // Are we defo in Linux?
-    // No Android support for this one, sorry peeps
     if env::consts::OS != "linux" {
         println!("Dotulous only supports Linux!");
         exit(-1);
@@ -65,10 +64,10 @@ fn main() {
 
     let args = CmdlineArgs::parse();
     match args.action {
-        Action::Load { profile_name } => { load_profile(manifest_location, &profile_name) },
-        Action::Unload { } => { unload_profile(manifest_location) },
-        Action::Create { profile_name } => { create_profile(manifest_location, &profile_name); },
-        Action::AutoFill { profile_name } => { fill_profile_files(manifest_location, &profile_name); },
+        Action::Load { profile_name } => { action_load_profile(manifest_location, &profile_name) },
+        Action::Unload { } => { action_unload_profile(manifest_location) },
+        Action::Create { profile_name } => { action_create_profile(manifest_location, &profile_name); },
+        Action::AutoFill { profile_name } => { action_fill_profile(manifest_location, &profile_name); },
         Action::Status { } => {
             let meta: Meta = Meta::load_meta(manifest_location);
             let current_profile: Option<String> = meta.current_profile_name();
@@ -92,20 +91,9 @@ fn main() {
     }
 }
 
-pub fn find_profile(manifest_location: &Path, profile_name: &str) -> DotfileManifest {
-    let folder_name = sanitize_filename::sanitize(profile_name);
-    let folder_path: &Path = Path::new(&folder_name);
-    let full_path: PathBuf = manifest_location.join(folder_path);
-    if !full_path.exists() {
-        panic!("Cannot find profile {profile_name}.");
-    }
-
-    // Load the manifest 
-    DotfileManifest::load_manifest(&full_path)
-}
 
 // Actions
-fn create_profile(manifest_location: &Path, profile_name: &str) {
+fn action_create_profile(manifest_location: &Path, profile_name: &str) {
     // Create the folder
     let folder_name = sanitize_filename::sanitize(profile_name);
     let folder_path: &Path = Path::new(&folder_name);
@@ -116,36 +104,36 @@ fn create_profile(manifest_location: &Path, profile_name: &str) {
     fs::create_dir_all(&full_path).expect("Unable to create profile folder.");
 
     // Create the manifest inside of it
-    let manifest: DotfileManifest = DotfileManifest::new(profile_name, &full_path);
+    let manifest: DotfileProfile = DotfileProfile::new(profile_name, &full_path);
     manifest.save_manifest();
 
     println!("Created new profile at: {}", full_path.to_str().unwrap());
 }
 
-fn unload_profile(manifest_location: &Path) {
+fn action_unload_profile(manifest_location: &Path) {
     let mut meta: Meta = Meta::load_meta(manifest_location);
     let current_profile: Option<String> = meta.current_profile_name();
     if current_profile.is_none() {
         panic!("No currently loaded profile.");
     }
 
-    let manifest = find_profile(manifest_location, &current_profile.unwrap());
-    manifest.unload_profile();
+    let manifest = DotfileProfile::find_profile(manifest_location, &current_profile.unwrap());
+    manifest.unload_profile_from_system();
 
     meta.empty_current_profile();
     meta.save_meta(manifest_location);
 }
 
-fn load_profile(manifest_location: &Path, profile_name: &str) {
+fn action_load_profile(manifest_location: &Path, profile_name: &str) {
     let mut meta: Meta = Meta::load_meta(manifest_location);
     let current_profile: Option<String> = meta.current_profile_name();
     if current_profile.is_some() {
-        let manifest = find_profile(manifest_location, &current_profile.unwrap());
-        manifest.unload_profile();
+        let manifest = DotfileProfile::find_profile(manifest_location, &current_profile.unwrap());
+        manifest.unload_profile_from_system();
         println!();
     }
 
-    let profile: DotfileManifest = find_profile(manifest_location, profile_name);
+    let profile: DotfileProfile = DotfileProfile::find_profile(manifest_location, profile_name);
     if !meta.is_trusted(&profile.repo_path) {
         println!("WARNING: Profile has not been marked as trusted.");
         println!("Please verify the contents of the profile! Remember that profiles can run ANY ARBITRARY COMMANDS on your system, and can install ANY ARBITRARY FILES.");
@@ -162,13 +150,13 @@ fn load_profile(manifest_location: &Path, profile_name: &str) {
         meta.trust_profile(profile.repo_path.to_path_buf());
         println!("Trusting profile {}", profile.name);
     }
-    profile.load_profile();
+    profile.load_profile_to_system();
 
     meta.set_current_profile(&profile);
     meta.save_meta(manifest_location);
 }
 
-fn fill_profile_files(manifest_location: &Path, profile_name: &str) {
-    let mut profile: DotfileManifest = find_profile(manifest_location, profile_name);
+fn action_fill_profile(manifest_location: &Path, profile_name: &str) {
+    let mut profile: DotfileProfile = DotfileProfile::find_profile(manifest_location, profile_name);
     profile.fill_files();
 }

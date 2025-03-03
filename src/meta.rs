@@ -1,8 +1,8 @@
-use std::{collections::HashMap, env, fs, os::unix::fs::symlink, path::{Path, PathBuf}};
+use std::{fs, path::{Path, PathBuf}};
 
 use serde::{Deserialize, Serialize};
 
-use crate::manifest::DotfileManifest;
+use crate::profile::DotfileProfile;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Meta {
@@ -39,7 +39,7 @@ impl Meta {
     pub fn current_profile_name(&self) -> Option<String> {
         self.current_profile.clone()
     }
-    pub fn set_current_profile(&mut self, profile: &DotfileManifest) {
+    pub fn set_current_profile(&mut self, profile: &DotfileProfile) {
         self.current_profile = Some(profile.name.clone());
         self.profile_path = Some(profile.repo_path.clone());
     }
