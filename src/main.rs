@@ -98,9 +98,9 @@ fn main() {
                 Ok(r) => r,
                 Err(e) => { error_and_exit!("Could not load current meta: {e}"); },
             };
-            let current_profile: Option<String> = meta.current_profile_name();
-            if let Some(profile_name) = current_profile {
-                println!("Currently loaded profile: {}", profile_name);
+            let current_profile: Option<DotfileProfile> = meta.current_profile();
+            if let Some(profile) = current_profile {
+                println!("Currently loaded profile: {}", profile.name);
             } else {
                 println!("No currently loaded profile.");
             }
@@ -178,14 +178,10 @@ fn action_unload_profile(dotulous_path: &Path) {
         Ok(r) => r,
         Err(e) => { error_and_exit!("Could not load current meta: {e}"); },
     };
-    let Some(current_profile_name) = meta.current_profile_name() else {
+    let Some(profile) = meta.current_profile() else {
         error_and_exit!("No currently loaded profile was found. Nothing to do.");
     };
 
-    let profile: DotfileProfile = match DotfileProfile::find_profile(dotulous_path, &current_profile_name) {
-        Ok(r) => r,
-        Err(e) => { error_and_exit!("Could not find currently loaded profile {current_profile_name}: {e}"); },
-    };
     profile.unload_profile_from_system(home_path);
 
     meta.empty_current_profile();
@@ -214,12 +210,7 @@ fn action_load_profile(dotulous_path: &Path, profile_name: &str) {
         Ok(r) => r,
         Err(e) => { error_and_exit!("Could not load current meta: {e}"); },
     };
-    if let Some(current_profile_name) = meta.current_profile_name() {
-        // TODO: Handle this with redundant profile data in the meta
-        let current_profile: DotfileProfile = match DotfileProfile::find_profile(dotulous_path, &current_profile_name) {
-            Ok(r) => r,
-            Err(e) => { error_and_exit!("Could not find currently loaded profile {current_profile_name}: {e}"); },
-        };
+    if let Some(current_profile) = meta.current_profile() {
         current_profile.unload_profile_from_system(home_path);
         println!();
     }

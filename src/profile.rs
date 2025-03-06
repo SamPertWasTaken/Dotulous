@@ -28,7 +28,7 @@ use crate::{error::DotulousError, meta::Meta};
 ///
 /// After modifying the profile's data, you should call [`DotfileProfile::save_manifest`] to save
 /// the changed profile `manifest.json` to disk.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct DotfileProfile {
     /// The user-friendly name of the profile.
     pub name: String,

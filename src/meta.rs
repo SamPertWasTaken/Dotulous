@@ -17,16 +17,8 @@ use crate::{error::DotulousError, profile::DotfileProfile};
 /// - [`Meta::set_current_profile`]
 /// - [`Meta::empty_current_profile`]
 /// 
-/// To find and read the currently loaded profile use [`Meta::current_profile_name`] along with
-/// [`DotfileProfile::find_profile`] like so;
-/// ```
-/// let meta: Meta = Meta::load_meta(dotulous_path).expect("Failed to read meta.");
-/// let Some(current_profile_name) = meta.current_profile_name() else {
-///     // No profile is currently loaded...
-/// }
-///
-/// let profile: DotfileProfile = DotfileProfile::find_profile(dotulous_path, &current_profile_name).expect("Could not find/load currently loaded profile on disk, potentially deleted?");
-/// ```
+/// To find and read the currently loaded profile use [`Meta::current_profile`]. This will return
+/// the currently loaded profile, *at the time of loading*. 
 ///
 /// ### Trusted Profiles 
 /// To trust a profile you can call [`Meta::trust_profile`] - **Only do this with the confirmation
@@ -37,8 +29,8 @@ use crate::{error::DotulousError, profile::DotfileProfile};
 pub struct Meta {
     /// Stub field, present in the serialized JSON to warn the user to not touch this file.
     do_not_touch_this_file: String,
-    /// The currently loaded profile's name, or [`None`] if no profile is loaded.
-    current_profile: Option<String>,
+    /// The currently 
+    current_profile: Option<DotfileProfile>,
     /// The currently loaded profile's path, or [`None`] if no profile is loaded.
     profile_path: Option<PathBuf>,
     /// A list of trusted profile paths.
@@ -91,16 +83,15 @@ impl Meta {
     /// Set the currently loaded profile inside the manifest, changing `current_profile` and
     /// `profile_path`.
     pub fn set_current_profile(&mut self, profile: &DotfileProfile) {
-        self.current_profile = Some(profile.name.clone());
-        self.profile_path = Some(profile.repo_path.clone());
+        self.current_profile = Some(profile.clone());
     }
     /// Clear's the current profile, making `current_profile` and `profile_path` to be [`None`].
     pub fn empty_current_profile(&mut self) {
         self.current_profile = None;
         self.profile_path = None;
     }
-    /// Returns the current profile's name, or [`None`] if no profile is currently loaded.
-    pub fn current_profile_name(&self) -> Option<String> {
+    /// Returns the current profile, or [`None`] if no profile is currently loaded.
+    pub fn current_profile(&self) -> Option<DotfileProfile> {
         self.current_profile.clone()
     }
 
