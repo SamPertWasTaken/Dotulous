@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs, io, os::unix::fs::symlink, path::{Path, Path
 
 use serde::{Deserialize, Serialize};
 
-use crate::{error::DotulousError, meta::Meta};
+use crate::error::DotulousError;
 
 /// A dotfile profile, that the user can load and modify. This should be loaded or at least
 /// representitive of the profile's `manifest.json`
