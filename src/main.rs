@@ -165,7 +165,7 @@ fn action_create_profile(dotulous_path: &Path, profile_name: &str) {
 /// This function will also update the Meta file.
 ///
 /// Can internally fail, however will not return a `Result` but rather simply exit since this is intended to only be
-/// called by the CLI. Instead, look at [Meta::current_profile_name] & [`DotfileProfile::unload_profile_from_system`].
+/// called by the CLI. Instead, look at [`Meta::current_profile`] & [`DotfileProfile::unload_profile_from_system`].
 fn action_unload_profile(dotulous_path: &Path) {
     let home_folder: String = match env::var("HOME") {
         Ok(r) => r,
