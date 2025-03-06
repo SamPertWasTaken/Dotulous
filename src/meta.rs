@@ -43,7 +43,7 @@ impl Meta {
     /// the file yourself, and call [`Meta::save_meta`].
     pub fn new() -> Self {
         Self {
-            do_not_touch_this_file: "".to_string(),
+            do_not_touch_this_file: "Don't touch this file! You'll break something!".to_string(),
             current_profile: None,
             profile_path: None,
             trusted_profiles: Vec::new()

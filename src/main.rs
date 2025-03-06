@@ -73,7 +73,8 @@ fn main() {
         Ok(r) => r,
         Err(e) => { error_and_exit!("Unable to find suitable home folder: {e}"); }
     };
-    let manifest_path: String = format!("{}/.dotulous/", home_folder);
+    let home_path: &Path = Path::new(&home_folder);
+    let manifest_path: String = format!("{home_folder}/.dotulous/");
     let manifest_location: &Path = Path::new(&manifest_path);
     if !manifest_location.exists() {
         if let Err(e) = fs::create_dir_all(manifest_location) {
@@ -89,8 +90,8 @@ fn main() {
 
     let args = CmdlineArgs::parse();
     match args.action {
-        Action::Load { profile_name } => { action_load_profile(manifest_location, &profile_name) },
-        Action::Unload { } => { action_unload_profile(manifest_location) },
+        Action::Load { profile_name } => { action_load_profile(manifest_location, home_path, &profile_name) },
+        Action::Unload { } => { action_unload_profile(manifest_location, home_path) },
         Action::Create { profile_name } => { action_create_profile(manifest_location, &profile_name); },
         Action::AutoFill { profile_name } => { action_fill_profile(manifest_location, &profile_name); },
         Action::Status { } => {
@@ -166,13 +167,8 @@ fn action_create_profile(dotulous_path: &Path, profile_name: &str) {
 ///
 /// Can internally fail, however will not return a `Result` but rather simply exit since this is intended to only be
 /// called by the CLI. Instead, look at [`Meta::current_profile`] & [`DotfileProfile::unload_profile_from_system`].
-fn action_unload_profile(dotulous_path: &Path) {
-    let home_folder: String = match env::var("HOME") {
-        Ok(r) => r,
-        Err(e) => { error_and_exit!("Unable to find suitable home folder: {e}"); }
-    };
-    let home_path: &Path = Path::new(&home_folder);
-    println!("Using home folder: {:?}", home_path);
+fn action_unload_profile(dotulous_path: &Path, home_path: &Path) {
+    println!("Using home folder: {home_path:?}");
 
     let mut meta: Meta = match Meta::load_meta(dotulous_path) {
         Ok(r) => r,
@@ -197,14 +193,9 @@ fn action_unload_profile(dotulous_path: &Path) {
 /// This function will also update the Meta file.
 ///
 /// Can internally fail, however will not return a `Result` but rather simply exit since this is intended to only be
-/// called by the CLI. Instead, look at [DotfileProfile::load_profile_to_system].
-fn action_load_profile(dotulous_path: &Path, profile_name: &str) {
-    let home_folder: String = match env::var("HOME") {
-        Ok(r) => r,
-        Err(e) => { error_and_exit!("Unable to find suitable home folder: {e}"); }
-    };
-    let home_path: &Path = Path::new(&home_folder);
-    println!("Using home folder: {:?}", home_path);
+/// called by the CLI. Instead, look at [`DotfileProfile::load_profile_to_system`].
+fn action_load_profile(dotulous_path: &Path, home_path: &Path, profile_name: &str) {
+    println!("Using home folder: {home_path:?}");
 
     let mut meta: Meta = match Meta::load_meta(dotulous_path) {
         Ok(r) => r,
@@ -235,7 +226,7 @@ fn action_load_profile(dotulous_path: &Path, profile_name: &str) {
             exit(-1);
         }
 
-        meta.trust_profile(profile.repo_path.to_path_buf());
+        meta.trust_profile(profile.repo_path.clone());
         println!("Trusting profile {}", profile.name);
     }
     profile.load_profile_to_system(home_path);
@@ -250,7 +241,7 @@ fn action_load_profile(dotulous_path: &Path, profile_name: &str) {
 /// the given `profile_name`, and where `dotulous_path` is the user's `.dotulous` folder.
 ///
 /// Can internally fail, however will not return a `Result` but rather simply exit since this is intended to only be
-/// called by the CLI. Instead, look at [DotfileProfile::fill_files].
+/// called by the CLI. Instead, look at [`DotfileProfile::fill_files`].
 fn action_fill_profile(dotulous_path: &Path, profile_name: &str) {
     let mut profile: DotfileProfile = match DotfileProfile::find_profile(dotulous_path, profile_name) {
         Ok(r) => r,

@@ -137,7 +137,7 @@ impl DotfileProfile {
             let Ok(stripped_path) = actual_path.strip_prefix(&self.repo_path) else { return Err(DotulousError::FailedReadProfileDirectory) };
             let final_path = stripped_path.to_path_buf();
 
-            println!("  {:?}", final_path);
+            println!("  {final_path:?}");
             self.files.insert(final_path.clone(), final_path.clone());
         }
         println!();
@@ -168,7 +168,7 @@ impl DotfileProfile {
             println!();
             println!("Running pre-commands.");
             for command in &self.pre_commands {
-                println!("  {}", command);
+                println!("  {command}");
                 let command: Result<Output, io::Error> = Command::new("sh")
                     .current_dir(home_path)
                     .arg("-c")
@@ -176,7 +176,7 @@ impl DotfileProfile {
                     .output();
                 if command.is_err() {
                     let unwrapped = command.unwrap();
-                    println!("  ERROR: Command failed to run (exit code {}): {}", unwrapped.status, String::from_utf8(unwrapped.stderr).unwrap())
+                    println!("  ERROR: Command failed to run (exit code {}): {}", unwrapped.status, String::from_utf8(unwrapped.stderr).unwrap());
                 }
             }
         }
@@ -185,13 +185,13 @@ impl DotfileProfile {
         for file in &self.files {
             let source: PathBuf = self.repo_path.join(file.0);
             let destination: PathBuf = home_path.join(file.1);
-            println!("  {:?} => {:?}", source, destination);
+            println!("  {source:?} => {destination:?}");
             if destination.exists() {
                 println!("  WARNING: Destination {destination:?} already exists! Skipping!");
                 continue;
             }
             if let Err(e) = symlink(&source, &destination) {
-                println!("  ERROR: Failed to symlink {source:?} -> {destination:?}: {e}")
+                println!("  ERROR: Failed to symlink {source:?} -> {destination:?}: {e}");
             }
         }
 
@@ -199,7 +199,7 @@ impl DotfileProfile {
             println!();
             println!("Running post-commands.");
             for command in &self.post_commands {
-                println!("  {}", command);
+                println!("  {command}");
                 let command: Result<Output, io::Error> = Command::new("sh")
                     .current_dir(home_path)
                     .arg("-c")
@@ -207,7 +207,7 @@ impl DotfileProfile {
                     .output();
                 if command.is_err() {
                     let unwrapped = command.unwrap();
-                    println!("  ERROR: Command failed to run (exit code {}): {}", unwrapped.status, String::from_utf8(unwrapped.stderr).unwrap())
+                    println!("  ERROR: Command failed to run (exit code {}): {}", unwrapped.status, String::from_utf8(unwrapped.stderr).unwrap());
                 }
             }
         }
@@ -232,7 +232,7 @@ impl DotfileProfile {
         println!("Unloading profile: {}", self.name);
         for file in &self.files {
             let destination: PathBuf = home_path.join(file.1);
-            println!("  Removing {:?}", destination);
+            println!("  Removing {destination:?}");
             if !destination.exists() {
                 println!("  WARNING: Destination {destination:?} doesn't exist! Skipping!");
                 continue;
@@ -240,17 +240,13 @@ impl DotfileProfile {
 
             if destination.is_dir() {
                 // very basic protection
-                if destination == Path::new("/") {
-                    panic!("Tried to remove root!");
-                }
-                if destination == home_path {
-                    panic!("Tried to remove home path!");
-                }
+                assert!(destination != Path::new("/"), "Tried to remove root!");
+                assert!(destination != home_path, "Tried to remove home path!");
                 if fs::remove_dir_all(&destination).is_err() {
-                    println!("  Error: Failed to delete destination {destination:?}.")
+                    println!("  Error: Failed to delete destination {destination:?}.");
                 }
             } else if fs::remove_file(&destination).is_err() {
-                println!("  Error: Failed to delete destination {destination:?}.")
+                println!("  Error: Failed to delete destination {destination:?}.");
             }
         }
 
@@ -258,7 +254,7 @@ impl DotfileProfile {
             println!();
             println!("Running removal commands.");
             for command in &self.removal_commands {
-                println!("  {}", command);
+                println!("  {command}");
                 let command: Result<Output, io::Error> = Command::new("sh")
                     .current_dir(home_path)
                     .arg("-c")
@@ -266,7 +262,7 @@ impl DotfileProfile {
                     .output();
                 if command.is_err() {
                     let unwrapped = command.unwrap();
-                    println!("  ERROR: Command failed to run (exit code {}): {}", unwrapped.status, String::from_utf8(unwrapped.stderr).unwrap())
+                    println!("  ERROR: Command failed to run (exit code {}): {}", unwrapped.status, String::from_utf8(unwrapped.stderr).unwrap());
                 }
             }
         }
