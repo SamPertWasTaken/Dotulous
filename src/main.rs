@@ -43,6 +43,10 @@ enum Action {
     /// Unloads the current active profile
     Unload {},
 
+    /// Unloads & Reloads the current active profile, use this if you've updated your profile and
+    /// want to reload it to your system quickly.
+    Reload {},
+
     /// Create a new dotfile configuration
     Create {
         /// The dotfile profile name to use.
@@ -92,6 +96,7 @@ fn main() {
     match args.action {
         Action::Load { profile_name } => { action_load_profile(manifest_location, home_path, &profile_name) },
         Action::Unload { } => { action_unload_profile(manifest_location, home_path) },
+        Action::Reload { } => { action_reload_profile(manifest_location, home_path); },
         Action::Create { profile_name } => { action_create_profile(manifest_location, &profile_name); },
         Action::AutoFill { profile_name } => { action_fill_profile(manifest_location, &profile_name); },
         Action::Status { } => {
@@ -160,32 +165,6 @@ fn action_create_profile(dotulous_path: &Path, profile_name: &str) {
     println!("Created new profile at: {}", full_path.to_str().unwrap());
 }
 
-/// User action for unloading the currently loaded profile from the system, where `dotulous_path`
-/// is the user's `.dotulous` folder.
-///
-/// This function will also update the Meta file.
-///
-/// Can internally fail, however will not return a `Result` but rather simply exit since this is intended to only be
-/// called by the CLI. Instead, look at [`Meta::current_profile`] & [`DotfileProfile::unload_profile_from_system`].
-fn action_unload_profile(dotulous_path: &Path, home_path: &Path) {
-    println!("Using home folder: {home_path:?}");
-
-    let mut meta: Meta = match Meta::load_meta(dotulous_path) {
-        Ok(r) => r,
-        Err(e) => { error_and_exit!("Could not load current meta: {e}"); },
-    };
-    let Some(profile) = meta.current_profile() else {
-        error_and_exit!("No currently loaded profile was found. Nothing to do.");
-    };
-
-    profile.unload_profile_from_system(home_path);
-
-    meta.empty_current_profile();
-    if let Err(e) = meta.save_meta(dotulous_path) {
-        error_and_exit!("Failed to save meta: {e}");
-    }
-}
-
 /// User action for loading a profile to the system, after finding the profile from `profile_name`, 
 /// where `dotulous_path` is the user's `.dotulous` folder.
 /// If the profile is not trusted, it will confirm with the user to trust it or not.
@@ -235,6 +214,57 @@ fn action_load_profile(dotulous_path: &Path, home_path: &Path, profile_name: &st
     if let Err(e) = meta.save_meta(dotulous_path) {
         error_and_exit!("Failed to save meta for \"{profile_name}\": {e}");
     }
+}
+
+/// User action for unloading the currently loaded profile from the system, where `dotulous_path`
+/// is the user's `.dotulous` folder.
+///
+/// This function will also update the Meta file.
+///
+/// Can internally fail, however will not return a `Result` but rather simply exit since this is intended to only be
+/// called by the CLI. Instead, look at [`Meta::current_profile`] & [`DotfileProfile::unload_profile_from_system`].
+fn action_unload_profile(dotulous_path: &Path, home_path: &Path) {
+    println!("Using home folder: {home_path:?}");
+
+    let mut meta: Meta = match Meta::load_meta(dotulous_path) {
+        Ok(r) => r,
+        Err(e) => { error_and_exit!("Could not load current meta: {e}"); },
+    };
+    let Some(profile) = meta.current_profile() else {
+        error_and_exit!("No currently loaded profile was found. Nothing to do.");
+    };
+
+    profile.unload_profile_from_system(home_path);
+
+    meta.empty_current_profile();
+    if let Err(e) = meta.save_meta(dotulous_path) {
+        error_and_exit!("Failed to save meta: {e}");
+    }
+}
+
+fn action_reload_profile(dotulous_path: &Path, home_path: &Path) {
+    println!("Using home folder: {home_path:?}");
+    // Unload the current profile, keeping a note of it's path
+    let mut meta: Meta = match Meta::load_meta(dotulous_path) {
+        Ok(r) => r,
+        Err(e) => { error_and_exit!("Could not load current meta: {e}"); },
+    };
+    let Some(old_profile) = meta.current_profile() else {
+        error_and_exit!("No currently loaded profile was found. Nothing to do.");
+    };
+
+    let profile_path: &Path = &old_profile.repo_path;
+    // Load the profile from that path. Done up here so if it fails we don't leave the user with a
+    // system without a profile on it
+    let new_profile: DotfileProfile = match DotfileProfile::from_manifest(profile_path) {
+        Ok(r) => r,
+        Err(e) => { error_and_exit!("Failed to find profile from path \"{profile_path:?}\": {e}"); },
+    };
+
+    old_profile.unload_profile_from_system(home_path);
+    meta.empty_current_profile();
+    new_profile.load_profile_to_system(home_path);
+    meta.set_current_profile(&new_profile);
 }
 
 /// User action for auto-filling a profile's `files` array to help them, finding the profile with
