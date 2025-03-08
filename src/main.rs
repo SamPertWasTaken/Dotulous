@@ -78,61 +78,28 @@ fn main() {
         Err(e) => { error_and_exit!("Unable to find suitable home folder: {e}"); }
     };
     let home_path: &Path = Path::new(&home_folder);
-    let manifest_path: String = format!("{home_folder}/.dotulous/");
-    let manifest_location: &Path = Path::new(&manifest_path);
-    if !manifest_location.exists() {
-        if let Err(e) = fs::create_dir_all(manifest_location) {
+    let dotulous_path_str: String = format!("{home_folder}/.dotulous/");
+    let dotulous_path: &Path = Path::new(&dotulous_path_str);
+    if !dotulous_path.exists() {
+        if let Err(e) = fs::create_dir_all(dotulous_path) {
             error_and_exit!("Unable to create dotulous folder: {e}");
         }
         let meta: Meta = Meta::new();
-        if let Err(e) = meta.save_meta(manifest_location) {
+        if let Err(e) = meta.save_meta(dotulous_path) {
             error_and_exit!("Failed to save meta: {e}");
         }
-        println!("NOTE: Created dotulous folder at {manifest_path}");
+        println!("NOTE: Created dotulous folder at {dotulous_path_str}");
         println!("NOTE: This is where your dotfile configurations will be!");
     }
 
     let args = CmdlineArgs::parse();
     match args.action {
-        Action::Load { profile_name } => { action_load_profile(manifest_location, home_path, &profile_name) },
-        Action::Unload { } => { action_unload_profile(manifest_location, home_path) },
-        Action::Reload { } => { action_reload_profile(manifest_location, home_path); },
-        Action::Create { profile_name } => { action_create_profile(manifest_location, &profile_name); },
-        Action::AutoFill { profile_name } => { action_fill_profile(manifest_location, &profile_name); },
-        Action::Status { } => {
-            let meta: Meta = match Meta::load_meta(manifest_location) {
-                Ok(r) => r,
-                Err(e) => { error_and_exit!("Could not load current meta: {e}"); },
-            };
-            let current_profile: Option<DotfileProfile> = meta.current_profile();
-            if let Some(profile) = current_profile {
-                println!("Currently loaded profile: {}", profile.name);
-            } else {
-                println!("No currently loaded profile.");
-            }
-            println!();
-            println!("Detected profiles:");
-
-            // Scan for all available profiles 
-            let paths = match fs::read_dir(manifest_location) {
-                Ok(r) => r,
-                Err(e) => { error_and_exit!("Failed to read from directory \"{manifest_location:?}\": {e}"); }
-            };
-            for path in paths {
-                let Ok(path) = path else {
-                    continue;
-                };
-                if !path.path().is_dir() {
-                    continue
-                }
-
-                let file_os_name = path.file_name();
-                let Some(file_name) = file_os_name.to_str() else {
-                    continue;
-                };
-                println!("  {file_name}");
-            }
-        },
+        Action::Load { profile_name } => { action_load_profile(dotulous_path, home_path, &profile_name) },
+        Action::Unload { } => { action_unload_profile(dotulous_path, home_path) },
+        Action::Reload { } => { action_reload_profile(dotulous_path, home_path); },
+        Action::Create { profile_name } => { action_create_profile(dotulous_path, &profile_name); },
+        Action::AutoFill { profile_name } => { action_fill_profile(dotulous_path, &profile_name); },
+        Action::Status { } => { action_status(dotulous_path) },
     }
 }
 
@@ -279,5 +246,40 @@ fn action_fill_profile(dotulous_path: &Path, profile_name: &str) {
     };
     if let Err(e) = profile.fill_files() {
         error_and_exit!("Failed to fill profile files for \"{profile_name}\": {e}");
+    }
+}
+
+fn action_status(dotulous_path: &Path) {
+    let meta: Meta = match Meta::load_meta(dotulous_path) {
+        Ok(r) => r,
+        Err(e) => { error_and_exit!("Could not load current meta: {e}"); },
+    };
+    let current_profile: Option<DotfileProfile> = meta.current_profile();
+    if let Some(profile) = current_profile {
+        println!("Currently loaded profile: {}", profile.name);
+    } else {
+        println!("No currently loaded profile.");
+    }
+    println!();
+    println!("Detected profiles:");
+
+    // Scan for all available profiles 
+    let paths = match fs::read_dir(dotulous_path) {
+        Ok(r) => r,
+        Err(e) => { error_and_exit!("Failed to read from directory \"{dotulous_path:?}\": {e}"); }
+    };
+    for path in paths {
+        let Ok(path) = path else {
+            continue;
+        };
+        if !path.path().is_dir() {
+            continue
+        }
+
+        let file_os_name = path.file_name();
+        let Some(file_name) = file_os_name.to_str() else {
+            continue;
+        };
+        println!("  {file_name}");
     }
 }
