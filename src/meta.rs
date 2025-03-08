@@ -31,8 +31,6 @@ pub struct Meta {
     do_not_touch_this_file: String,
     /// The currently 
     current_profile: Option<DotfileProfile>,
-    /// The currently loaded profile's path, or [`None`] if no profile is loaded.
-    profile_path: Option<PathBuf>,
     /// A list of trusted profile paths.
     trusted_profiles: Vec<PathBuf>
 }
@@ -45,7 +43,6 @@ impl Meta {
         Self {
             do_not_touch_this_file: "Don't touch this file! You'll break something!".to_string(),
             current_profile: None,
-            profile_path: None,
             trusted_profiles: Vec::new()
         }
     }
@@ -88,7 +85,6 @@ impl Meta {
     /// Clear's the current profile, making `current_profile` and `profile_path` to be [`None`].
     pub fn empty_current_profile(&mut self) {
         self.current_profile = None;
-        self.profile_path = None;
     }
     /// Returns the current profile, or [`None`] if no profile is currently loaded.
     pub fn current_profile(&self) -> Option<DotfileProfile> {
