@@ -94,12 +94,12 @@ fn main() {
 
     let args = CmdlineArgs::parse();
     match args.action {
-        Action::Load { profile_name } => { action_load_profile(dotulous_path, home_path, &profile_name) },
-        Action::Unload { } => { action_unload_profile(dotulous_path, home_path) },
-        Action::Reload { } => { action_reload_profile(dotulous_path, home_path); },
-        Action::Create { profile_name } => { action_create_profile(dotulous_path, &profile_name); },
-        Action::AutoFill { profile_name } => { action_fill_profile(dotulous_path, &profile_name); },
-        Action::Status { } => { action_status(dotulous_path) },
+        Action::Load { profile_name } => action_load_profile(dotulous_path, home_path, &profile_name),
+        Action::Unload { } => action_unload_profile(dotulous_path, home_path),
+        Action::Reload { } => action_reload_profile(dotulous_path, home_path),
+        Action::Create { profile_name } => action_create_profile(dotulous_path, &profile_name),
+        Action::AutoFill { profile_name } => action_fill_profile(dotulous_path, &profile_name),
+        Action::Status { } => action_status(dotulous_path)
     }
 }
 
