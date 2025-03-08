@@ -209,6 +209,15 @@ fn action_unload_profile(dotulous_path: &Path, home_path: &Path) {
     }
 }
 
+/// User action for unloading and then immedietely re-loading the current profile, where `dotulous_path` 
+/// is the user's `.dotulous` folder.
+///
+/// This function will also update the Meta file, emptying the currently loaded profile when the old 
+/// profile is unloaded until the new profile is loaded as to prevent errors from loading the new 
+/// profile leaving the user with an incorrect meta file.
+/// 
+/// Can internally fail, however will not return a `Result` but rather simply exit since this is intended to only be
+/// called by the CLI. Instead, look at [`Meta::current_profile`], [`DotfileProfile::load_profile_to_system`] & [`DotfileProfile::unload_profile_from_system`].
 fn action_reload_profile(dotulous_path: &Path, home_path: &Path) {
     println!("Using home folder: {home_path:?}");
     // Unload the current profile, keeping a note of it's path
@@ -249,6 +258,11 @@ fn action_fill_profile(dotulous_path: &Path, profile_name: &str) {
     }
 }
 
+/// User action for gathering the current status of dotulous as well as all the profiles the user
+/// can use.
+///
+/// Can internally fail, however will not return a `Result` but rather simply exit since this is intended to only be
+/// called by the CLI.
 fn action_status(dotulous_path: &Path) {
     let meta: Meta = match Meta::load_meta(dotulous_path) {
         Ok(r) => r,
