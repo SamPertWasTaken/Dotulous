@@ -1,8 +1,14 @@
 [package]
 name = "dotulous"
-description = "A fast and easy way to quickly manage dotfiles."
 version = "0.1.0"
+authors = ["Sam Pert <sampert@hotmail.co.uk>"]
 edition = "2021"
+description = "A fast and easy way to quickly manage dotfiles."
+readme = "README.md"
+repository = "https://github.com/SamPertWasTaken/Dotulous"
+license = "Apache-2.0"
+keywords = ["dotfile", "manager"]
+categories = ["command-line-utilities", "config", "filesystem"]
 
 [dependencies]
 clap = { version = "4.5.28", features = ["derive"] }
