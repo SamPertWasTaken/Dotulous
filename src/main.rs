@@ -241,6 +241,9 @@ fn action_reload_profile(dotulous_path: &Path, home_path: &Path) {
     meta.empty_current_profile();
     new_profile.load_profile_to_system(home_path);
     meta.set_current_profile(&new_profile);
+    if let Err(e) = meta.save_meta(dotulous_path) {
+        error_and_exit!("Failed to save meta: {e}");
+    }
 }
 
 /// User action for auto-filling a profile's `files` array to help them, finding the profile with
