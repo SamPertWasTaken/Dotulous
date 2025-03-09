@@ -28,10 +28,13 @@ use crate::{error::DotulousError, profile::DotfileProfile};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Meta {
     /// Stub field, present in the serialized JSON to warn the user to not touch this file.
+    #[serde(default = "do_not_touch_this_file")]
     do_not_touch_this_file: String,
     /// The currently in-use profile data.
+    #[serde(default)]
     current_profile: Option<DotfileProfile>,
     /// A list of trusted profile paths.
+    #[serde(default)]
     trusted_profiles: Vec<PathBuf>
 }
 impl Meta {
@@ -99,4 +102,8 @@ impl Meta {
     pub fn is_trusted(&self, path: &Path) -> bool {
         self.trusted_profiles.contains(&path.to_path_buf())
     }
+}
+
+fn do_not_touch_this_file() -> String {
+    "Don't touch this file! You'll break something!".to_string()
 }
