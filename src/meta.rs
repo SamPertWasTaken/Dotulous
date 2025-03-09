@@ -29,7 +29,7 @@ use crate::{error::DotulousError, profile::DotfileProfile};
 pub struct Meta {
     /// Stub field, present in the serialized JSON to warn the user to not touch this file.
     do_not_touch_this_file: String,
-    /// The currently 
+    /// The currently in-use profile data.
     current_profile: Option<DotfileProfile>,
     /// A list of trusted profile paths.
     trusted_profiles: Vec<PathBuf>
